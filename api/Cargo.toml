@@ -1,0 +1,14 @@
+[package]
+edition = "2021"
+name = "service_auth"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "4.0.1"
+async-trait = "0.1.53"
+chrono = "0.4.19"
+jsonwebtoken = "8.1.0"
+sea-orm = {version = "0.8.0", features = ["sqlx-postgres", "runtime-actix-rustls", "macros"]}
+serde = {version = "1.0.137", features = ["derive"]}
