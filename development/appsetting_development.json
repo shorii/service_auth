@@ -1,0 +1,26 @@
+[
+    {
+        "key": "common/jwt_secret_key",
+        "value": "MnhFcWhpek5IQw=="
+    },
+    {
+        "key": "service_auth/db/user",
+        "value": "cG9zdGdyZXM="
+    },
+    {
+        "key": "service_auth/db/password",
+        "value": "cG9zdGdyZXM="
+    },
+    {
+        "key": "service_auth/db/host",
+        "value": "bG9jYWxob3N0"
+    },
+    {
+        "key": "service_auth/db/port",
+        "value": "NTQzMg=="
+    },
+    {
+        "key": "service_auth/db/database",
+        "value": "YXV0aA=="
+    }
+]
