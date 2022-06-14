@@ -1,7 +1,8 @@
 body {
-    background-color: #353535
+    background-color: #353535;
+    margin: 30px;
 }
 
 body * {
-    color: #FFFFFF
+    color: #FFFFFF;
 }
