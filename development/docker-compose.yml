@@ -13,3 +13,30 @@ services:
       - 5432:5432
     volumes:
       - ./entrypoints/load-extensions.sh:/docker-entrypoint-initdb.d/load-extensions.sh
+    networks:
+      - development_network
+
+  consul:
+    image: hashicorp/consul:latest
+    restart: always
+    ports:
+      - 8500:8500
+      - 8600:8600/tcp
+      - 8600:8600/udp
+    command: "consul agent -dev -bind 0.0.0.0 -client 0.0.0.0"
+    networks:
+      - development_network
+
+  consul_setup:
+    image: hashicorp/consul:latest
+    entrypoint: consul kv import -http-addr=http://consul:8500 @/home/consul/appsetting_development.json
+    volumes:
+      - ./appsetting_development.json:/home/consul/appsetting_development.json
+    networks:
+      - development_network
+    depends_on:
+      - consul
+
+networks:
+  development_network:
+    driver: bridge
