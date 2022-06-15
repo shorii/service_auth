@@ -15,11 +15,13 @@ async fn login(data: web::Data<AppState>, request: web::Json<LoginRequest>) -> i
         .find_by_credential(req.username, req.password)
         .await;
     match user {
-        Some(u) => HttpResponse::Ok().json(LoginResponse {
-            user: UserModel {
-                username: u.username,
-            },
-        }),
+        Some(u) => HttpResponse::Ok()
+            .append_header(("Set-Cookie", u.jwt()))
+            .json(LoginResponse {
+                user: UserModel {
+                    username: u.username,
+                },
+            }),
         None => HttpResponse::Unauthorized().finish(),
     }
 }
@@ -42,7 +44,7 @@ async fn register(
                     username: u.username,
                 },
             }),
-        Err(_) => HttpResponse::UnprocessableEntity().finish(),
+        Err(e) => HttpResponse::UnprocessableEntity().body(e.to_string()),
     }
 }
 

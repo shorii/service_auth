@@ -29,7 +29,7 @@ impl IUserRepository for UserRepository {
                 "auth"."user"
             WHERE
                 username = $1
-                AND password crypt($2, password)
+                AND password = crypt($2, password)
             "#,
             vec![username.into(), password.into()],
         ))
