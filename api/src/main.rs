@@ -91,7 +91,10 @@ async fn main() -> std::io::Result<()> {
         .unwrap()
     };
 
-    let state = AppState { conn };
+    let state = {
+        let location: String = get_consul_kv!(client, "service_auth/location");
+        AppState { conn, location }
+    };
 
     HttpServer::new(move || {
         App::new().service(
