@@ -21,6 +21,10 @@
     },
     {
         "key": "service_auth/db/database",
-        "value": "YXV0aA=="
+        "value": "c2VydmljZV9hdXRo"
+    },
+    {
+        "key": "service_auth/location",
+        "value": "L2R1bW15"
     }
 ]

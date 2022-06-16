@@ -3,9 +3,10 @@ use std::net::{SocketAddr, ToSocketAddrs};
 use actix_web::{web, App, HttpServer};
 use clap::builder::TypedValueParser;
 use clap::Parser;
-use consul::kv::KV;
-use consul::{Client, Config};
+use consulrs::client::{ConsulClient, ConsulClientSettingsBuilder};
+use consulrs::kv;
 use state::AppState;
+use std::convert::TryInto;
 
 mod controller;
 mod domain;
@@ -46,7 +47,16 @@ struct ServiceArgs {
 
 macro_rules! get_consul_kv {
     ($client: expr, $key: expr) => {
-        $client.get($key, None).unwrap().0.unwrap().Value
+        kv::read(&$client, $key, None)
+            .await
+            .unwrap()
+            .response
+            .pop()
+            .unwrap()
+            .value
+            .unwrap()
+            .try_into()
+            .unwrap()
     };
 }
 
@@ -55,22 +65,25 @@ async fn main() -> std::io::Result<()> {
     let args = ServiceArgs::parse();
 
     let client = {
+        let mut builder = ConsulClientSettingsBuilder::default();
         let config = match args.consul_addr {
             Some(addr) => {
-                Config::new_from_consul_host(&addr.ip().to_string(), Some(addr.port()), None)
-                    .unwrap()
+                let consul_http_addr = format!("https://{}", addr);
+                builder.address(consul_http_addr)
             }
-            None => Config::new().unwrap(),
-        };
-        Client::new(config)
+            None => &mut builder,
+        }
+        .build()
+        .unwrap();
+        ConsulClient::new(config).unwrap()
     };
 
     let conn = {
-        let user = get_consul_kv!(client, "service_auth/db/user");
-        let password = get_consul_kv!(client, "service_auth/db/password");
-        let host = get_consul_kv!(client, "service_auth/db/host");
-        let port = get_consul_kv!(client, "service_auth/db/port");
-        let database = get_consul_kv!(client, "service_auth/db/host");
+        let user: String = get_consul_kv!(client, "service_auth/db/user");
+        let password: String = get_consul_kv!(client, "service_auth/db/password");
+        let host: String = get_consul_kv!(client, "service_auth/db/host");
+        let port: String = get_consul_kv!(client, "service_auth/db/port");
+        let database: String = get_consul_kv!(client, "service_auth/db/database");
         sea_orm::Database::connect(format!(
             "postgresql://{user}:{password}@{host}:{port}/{database}"
         ))
@@ -78,7 +91,10 @@ async fn main() -> std::io::Result<()> {
         .unwrap()
     };
 
-    let state = AppState { conn };
+    let state = {
+        let location: String = get_consul_kv!(client, "service_auth/location");
+        AppState { conn, location }
+    };
 
     HttpServer::new(move || {
         App::new().service(

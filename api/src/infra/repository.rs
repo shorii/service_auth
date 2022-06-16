@@ -1,17 +1,16 @@
 use crate::domain::{IUserRepository, User};
 use crate::infra::db::user;
-use crate::state::AppState;
 use async_trait::async_trait;
 use sea_orm::query::Statement;
-use sea_orm::{ConnectionTrait, DbBackend, DbErr, FromQueryResult};
+use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, DbErr, FromQueryResult};
 
 pub struct UserRepository {
-    state: AppState,
+    conn: DatabaseConnection,
 }
 
 impl UserRepository {
-    pub fn new(state: AppState) -> Self {
-        Self { state }
+    pub fn new(conn: DatabaseConnection) -> Self {
+        Self { conn }
     }
 }
 
@@ -29,11 +28,11 @@ impl IUserRepository for UserRepository {
                 "auth"."user"
             WHERE
                 username = $1
-                AND password crypt($2, password)
+                AND password = crypt($2, password)
             "#,
             vec![username.into(), password.into()],
         ))
-        .one(&self.state.conn)
+        .one(&self.conn)
         .await
         .expect("db error occurred");
         match model {
@@ -47,8 +46,7 @@ impl IUserRepository for UserRepository {
     }
 
     async fn create(&self, user: User) -> Result<User, DbErr> {
-        let AppState { conn } = self.state.clone();
-        conn.execute(Statement::from_sql_and_values(
+        self.conn.execute(Statement::from_sql_and_values(
             DbBackend::Postgres,
             r#"INSERT INTO "auth"."user" (username, password) VALUES ($1, crypt($2, gen_salt('bf')))"#,
             {

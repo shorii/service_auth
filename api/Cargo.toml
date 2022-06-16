@@ -10,7 +10,7 @@ actix-web = "4.0.1"
 async-trait = "0.1.53"
 chrono = "0.4.19"
 clap = {version = "3.2.1", features = ["derive"]}
-consul = "0.4.2"
+consulrs = "0.1.0"
 jsonwebtoken = "8.1.0"
 sea-orm = {version = "0.8.0", features = ["sqlx-postgres", "runtime-actix-rustls", "macros"]}
 serde = {version = "1.0.137", features = ["derive"]}
