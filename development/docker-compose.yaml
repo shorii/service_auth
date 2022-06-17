@@ -49,6 +49,15 @@ services:
     extra_hosts:
       - local_dev:$LOCAL_HOST_IP
 
+  redirect_dest_service:
+    image: python:3.10-slim-bullseye
+    command: "python -m http.server --directory /code 8000"
+    ports:
+      - 8000:8000
+    volumes:
+      - ./index.html:/code/index.html
+    networks:
+      - development_network
 
 networks:
   development_network:
