@@ -40,15 +40,24 @@ services:
   edge_proxy:
     image: envoyproxy/envoy-dev:6f7e3472039402166678af91848282a0f6fe5186
     ports:
-      - 10000:1000
+      - 10000:10000
       - 9901:9901
     volumes:
-      - ./envoy.yml:/etc/envoy/envoy.yml
+      - ./envoy.yaml:/etc/envoy/envoy.yaml
     networks:
       - development_network
     extra_hosts:
       - local_dev:$LOCAL_HOST_IP
 
+  redirect_dest_service:
+    image: python:3.10-slim-bullseye
+    command: "python -m http.server --directory /code 8000"
+    ports:
+      - 8000:8000
+    volumes:
+      - ./index.html:/code/index.html
+    networks:
+      - development_network
 
 networks:
   development_network:

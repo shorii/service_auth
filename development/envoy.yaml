@@ -1,12 +1,12 @@
 admin:
   address:
-    socket_address: { address: 127.0.0.1, port_value: 9901 }
+    socket_address: { address: 0.0.0.0, port_value: 9901 }
 
 static_resources:
   listeners:
   - name: listener_0
     address:
-      socket_address: { address: 127.0.0.1, port_value: 10000 }
+      socket_address: { address: 0.0.0.0, port_value: 10000 }
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
@@ -20,18 +20,29 @@ static_resources:
             - name: local_service
               domains: ["*"]
               routes:
-              - match: { prefix: "/api" }
-                route: { cluster: api_service }
-              - match: { prefix: "/" }
-                route: { cluster: ui_service }
+              - match:
+                  prefix: "/dummy"
+                route:
+                  prefix_rewrite: "/"
+                  cluster: dummy_service
+              - match:
+                  prefix: "/api"
+                route:
+                  prefix_rewrite: "/"
+                  cluster: api_service
+              - match:
+                  prefix: "/"
+                route:
+                  cluster: ui_service
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
   clusters:
   - name: ui_service
     connect_timeout: 0.25s
-    type: STATIC
+    type: STRICT_DNS
     lb_policy: ROUND_ROBIN
     load_assignment:
       cluster_name: ui_service
@@ -44,7 +55,7 @@ static_resources:
                 port_value: 3000
   - name: api_service
     connect_timeout: 0.25s
-    type: STATIC
+    type: STRICT_DNS
     lb_policy: ROUND_ROBIN
     load_assignment:
       cluster_name: api_service
@@ -55,3 +66,16 @@ static_resources:
               socket_address:
                 address: local_dev
                 port_value: 8080
+  - name: dummy_service
+    connect_timeout: 0.25s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: dummy_service
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: redirect_dest_service
+                port_value: 8000

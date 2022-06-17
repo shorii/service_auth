@@ -4,6 +4,10 @@
         <title>Test Page</title>
     </head>
     <body>
-        <div>Hello via service_auth</div>
+        <div id="greet">Hello via service_auth</div>
     </body>
+    <script>
+        let e = document.getElementById("greet");
+        e.insertAdjacentHTML("afterend", "<p>" + document.cookie + "</p>");
+    </script>
 </html>
