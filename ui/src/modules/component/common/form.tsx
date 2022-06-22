@@ -9,13 +9,40 @@ import Password from '@mui/icons-material/Password';
 import Login from '@mui/icons-material/Login';
 import Button from '@mui/material/Button';
 
+export interface AuthFormValues {
+    username: string;
+    password: string;
+}
+
+const defaultAuthFormValues = {
+    username: '',
+    password: '',
+};
+
 export interface AuthFormProps {
     label: string;
+    onClick: (values: AuthFormValues) => void;
     footer?: React.ReactNode;
 }
 
 export const AuthForm: React.FC<AuthFormProps> = (props) => {
-    const { label, footer } = props;
+    const { label, onClick, footer } = props;
+    const [formValues, setFormValues] = React.useState<AuthFormValues>(defaultAuthFormValues);
+
+    const handleClick = React.useCallback(async () => {
+        await onClick(formValues);
+    }, [onClick, formValues]);
+
+    const handleChange = React.useCallback(
+        (field: keyof AuthFormValues) => (e: React.ChangeEvent<HTMLInputElement>) => {
+            setFormValues({
+                ...formValues,
+                [field]: e.target.value,
+            });
+        },
+        [formValues],
+    );
+
     return (
         <Grid container direction="column" justifyContent="center" alignItems="center">
             <Grid item xs={2}>
@@ -28,6 +55,8 @@ export const AuthForm: React.FC<AuthFormProps> = (props) => {
                             <TextField
                                 variant="standard"
                                 label="username"
+                                value={formValues.username}
+                                onChange={handleChange('username')}
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
@@ -44,6 +73,8 @@ export const AuthForm: React.FC<AuthFormProps> = (props) => {
                             <TextField
                                 variant="standard"
                                 label="password"
+                                value={formValues.password}
+                                onChange={handleChange('password')}
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
@@ -57,7 +88,12 @@ export const AuthForm: React.FC<AuthFormProps> = (props) => {
                             />
                         </Grid>
                         <Grid item>
-                            <Button variant="text" startIcon={<Login />} style={{ float: 'right' }}>
+                            <Button
+                                variant="text"
+                                startIcon={<Login />}
+                                style={{ float: 'right' }}
+                                onClick={handleClick}
+                            >
                                 {label}
                             </Button>
                         </Grid>

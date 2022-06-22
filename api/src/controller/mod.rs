@@ -1,4 +1,4 @@
-mod controller;
+mod endpoint;
 mod model;
 
-pub use controller::*;
+pub use endpoint::*;

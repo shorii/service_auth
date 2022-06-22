@@ -1,12 +1,14 @@
 use async_trait::async_trait;
 use chrono::{Duration, Utc};
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebkey::JsonWebKey;
+use jsonwebtoken::{encode, Algorithm, Header};
 use sea_orm::entity::prelude::Uuid;
 use sea_orm::DbErr;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct UserClaims {
+    iss: String,
     sub: String,
     exp: usize,
 }
@@ -27,16 +29,20 @@ impl User {
         }
     }
 
-    pub fn jwt(&self) -> String {
+    pub fn jwt(&self, secret_key: JsonWebKey) -> String {
         let exp = Utc::now() + Duration::days(365);
         let claims = UserClaims {
+            iss: "service_auth.api".to_string(),
             sub: self.username.clone(),
             exp: exp.timestamp() as usize,
         };
         encode(
-            &Header::default(),
+            &Header {
+                alg: Algorithm::ES256,
+                ..Header::default()
+            },
             &claims,
-            &EncodingKey::from_secret("SECRET_KEY".as_bytes()),
+            &secret_key.key.to_encoding_key(),
         )
         .unwrap()
     }

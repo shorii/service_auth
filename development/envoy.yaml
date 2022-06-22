@@ -14,6 +14,8 @@ static_resources:
           "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: ingress_http
           codec_type: AUTO
+          upgrade_configs:
+          - upgrade_type: websocket
           route_config:
             name: local_route
             virtual_hosts:
@@ -28,16 +30,39 @@ static_resources:
               - match:
                   prefix: "/api"
                 route:
-                  prefix_rewrite: "/"
+                  regex_rewrite:
+                    pattern:
+                      google_re2: {}
+                      regex: "^\/api(.*)$"
+                    substitution: '\1'
                   cluster: api_service
               - match:
                   prefix: "/"
                 route:
                   cluster: ui_service
           http_filters:
+          - name: envoy.filters.http.jwt_authn
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+              providers:
+                authenticate:
+                  remote_jwks:
+                    http_uri:
+                      uri: http://local_dev:8080/user/jwks
+                      cluster: api_service
+                      timeout: 1s
+                  from_cookies:
+                    - cookie
+                  issuer: "service_auth.api"
+              rules:
+                - match:
+                    prefix: /dummy
+                  requires:
+                    provider_name: authenticate
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+                    
 
   clusters:
   - name: ui_service
