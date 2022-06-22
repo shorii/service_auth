@@ -5,6 +5,9 @@ use clap::builder::TypedValueParser;
 use clap::Parser;
 use consulrs::client::{ConsulClient, ConsulClientSettingsBuilder};
 use consulrs::kv;
+use jsonwebkey::Algorithm;
+use jsonwebkey::JsonWebKey;
+use jsonwebkey::Key;
 use state::AppState;
 use std::convert::TryInto;
 
@@ -25,7 +28,7 @@ impl TypedValueParser for CustomSocketAddrParser {
         _arg: Option<&clap::Arg>,
         value: &std::ffi::OsStr,
     ) -> Result<Self::Value, clap::Error> {
-        let addr = value.to_str().unwrap().to_socket_addrs()?.nth(0).unwrap();
+        let addr = value.to_str().unwrap().to_socket_addrs()?.next().unwrap();
         Ok(addr)
     }
 }
@@ -62,6 +65,8 @@ macro_rules! get_consul_kv {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let mut secret_key = JsonWebKey::new(Key::generate_p256());
+    secret_key.set_algorithm(Algorithm::ES256).unwrap();
     let args = ServiceArgs::parse();
 
     let client = {
@@ -93,7 +98,11 @@ async fn main() -> std::io::Result<()> {
 
     let state = {
         let location: String = get_consul_kv!(client, "service_auth/location");
-        AppState { conn, location }
+        AppState {
+            conn,
+            location,
+            secret_key,
+        }
     };
 
     HttpServer::new(move || {
